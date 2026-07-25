@@ -14,7 +14,8 @@ app then gives you:
   point-to-point measuring tool.
 - **On the Map view** — the same model georeferenced onto OpenStreetMap via
   its anchor coordinates, with buildings rendered as 3D extrusions at their
-  real heights and every footprint at true geographic size.
+  real heights and every footprint at true geographic size. Hover or click a
+  building for its name and dimensions.
 - **GeoJSON export** — one click produces a standard GeoJSON file you can drop
   into Google Earth, QGIS, ArcGIS, Mapbox, geojson.io, or any other mapping tool.
 
@@ -32,8 +33,9 @@ python3 -m http.server 8000
 load the bundled example because browsers block local `fetch`; the **Load
 JSON** button still works.)
 
-Three.js and MapLibre GL load from a CDN, and the map basemap streams from
-OpenStreetMap, so an internet connection is needed.
+Three.js and MapLibre GL are vendored in `vendor/`, so the app is fully
+self-contained — only the map basemap streams from OpenStreetMap and needs an
+internet connection. The 3D model view works entirely offline.
 
 ## Defining a development
 
@@ -111,6 +113,7 @@ so what you see on the map is exactly what any external GIS tool will show.
 | `src/units.js` | ft/m conversion and display formatting |
 | `src/geo.js` | Anchor projection, road buffering, GeoJSON generation |
 | `src/viewer3d.js` | Three.js true-scale scene: extrusions, labels, scale figures, measuring |
-| `src/mapview.js` | MapLibre GL map with OSM basemap and 3D building extrusions |
+| `src/mapview.js` | MapLibre GL map with OSM basemap, 3D building extrusions, popups |
 | `src/main.js` | Wiring: tabs, unit toggle, file load, GeoJSON download |
 | `data/example-development.json` | Sample mixed-use development (~24 acres) |
+| `vendor/` | Vendored Three.js 0.160 and MapLibre GL 4.7.1 (no CDN needed) |

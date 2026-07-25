@@ -121,4 +121,5 @@ fetch('./data/example-development.json')
     el('warnings').classList.remove('hidden');
   });
 
-export { formatLength }; // re-export for console experimentation
+// Expose for debugging / console experimentation.
+window.devApp = { state, viewer, mapView, formatLength };
