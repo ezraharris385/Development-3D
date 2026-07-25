@@ -94,6 +94,8 @@ export class Viewer3D {
     this.pickables = [];
     this.measurePoints = [];
     this.measureMode = false;
+    this.selectedId = null;
+    this._textureCache = new Map(); // dataUrl -> THREE.Texture
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -171,7 +173,47 @@ export class Viewer3D {
     this.measureLabel.classList.add('hidden');
   }
 
-  setDevelopment(dev, displayUnits) {
+  /**
+   * Get a repeating texture for a material photo, tiled at true scale:
+   * the photo covers coverageWM x coverageHM real meters, so repeat is
+   * 1/coverage per meter of surface (UVs are generated in meters).
+   */
+  _materialTexture(tex) {
+    let texture = this._textureCache.get(tex.dataUrl);
+    if (!texture) {
+      texture = new THREE.TextureLoader().load(tex.dataUrl);
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = 4;
+      this._textureCache.set(tex.dataUrl, texture);
+    }
+    const t = texture.clone();
+    t.needsUpdate = true;
+    t.repeat.set(1 / tex.coverageWM, 1 / tex.coverageHM);
+    return t;
+  }
+
+  /** Build the THREE material for one surface of a structure. */
+  _surfaceMaterial(dev, materialId, fallbackColor) {
+    const def = materialId ? dev.materials[materialId] : null;
+    const params = { roughness: 0.85, metalness: 0.05 };
+    if (def?.texture) {
+      params.map = this._materialTexture(def.texture);
+      params.color = 0xffffff;
+    } else {
+      params.color = new THREE.Color(def?.color ?? fallbackColor);
+    }
+    if (def?.category === 'glass') {
+      params.roughness = 0.25;
+      params.metalness = 0.4;
+    } else if (def?.category === 'metal') {
+      params.roughness = 0.45;
+      params.metalness = 0.6;
+    }
+    return new THREE.MeshStandardMaterial(params);
+  }
+
+  setDevelopment(dev, displayUnits, { preserveCamera = false } = {}) {
     this.dev = dev;
     this.displayUnits = displayUnits;
     this.pickables = [];
@@ -228,14 +270,18 @@ export class Viewer3D {
       this.modelGroup.add(line);
     }
 
-    // Structures: extruded exactly to their real height.
+    // Structures: extruded exactly to their real height. ExtrudeGeometry
+    // puts the caps in material group 0 (roof after rotation) and the side
+    // walls in group 1 (facade); UVs are in shape/depth units = meters, so
+    // material photos tile at their true physical coverage.
     for (const s of dev.structures) {
       const geo = toGround(new THREE.ExtrudeGeometry(shapeFromPoints(s.footprint), {
         depth: s.heightM, bevelEnabled: false,
       }));
-      const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-        color: new THREE.Color(s.color), roughness: 0.85, metalness: 0.05,
-      }));
+      const roofFallback = new THREE.Color(s.color).multiplyScalar(0.55).getStyle();
+      const roofMat = this._surfaceMaterial(dev, s.materials.roof, roofFallback);
+      const wallMat = this._surfaceMaterial(dev, s.materials.facade, s.color);
+      const mesh = new THREE.Mesh(geo, [roofMat, wallMat]);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       mesh.userData.structure = s;
@@ -269,9 +315,22 @@ export class Viewer3D {
     Object.assign(this.sun.shadow.camera, { left: -d, right: d, top: d, bottom: -d, far: radius * 4 + 500 });
     this.sun.shadow.camera.updateProjectionMatrix();
 
-    this.controls.target.set(cx, 0, -cy);
-    this.camera.position.set(cx + radius * 0.75, radius * 0.65 + 40, -cy + radius * 0.9);
-    this.camera.lookAt(cx, 0, -cy);
+    if (!preserveCamera) {
+      this.controls.target.set(cx, 0, -cy);
+      this.camera.position.set(cx + radius * 0.75, radius * 0.65 + 40, -cy + radius * 0.9);
+      this.camera.lookAt(cx, 0, -cy);
+    }
+    this.setSelected(this.selectedId);
+  }
+
+  /** Highlight the structure with the given id (null clears). */
+  setSelected(id) {
+    this.selectedId = id;
+    for (const mesh of this.pickables) {
+      const on = mesh.userData.structure.id === id;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach((m) => m.emissive?.setHex(on ? 0x2a4a6a : 0x000000));
+    }
   }
 
   _pointerRay(event) {

@@ -27,8 +27,10 @@
       <button class="tab-btn" data-tab="viewmap">On the Map</button>
     </nav>
     <div class="toolbar">
+      <button id="btn-editor" title="Edit structures, materials, photos and dimensions">✏️ Editor</button>
       <button id="unit-toggle" title="Toggle display units">Units: ft</button>
       <button id="btn-measure" title="Click two points on the ground to measure">📏 Measure</button>
+      <button id="btn-save" title="Download the development JSON (includes photos)">💾 Save JSON</button>
       <button id="btn-geojson" title="Download GeoJSON for GIS / other maps">⬇ GeoJSON</button>
       <label class="file-btn" title="Load a development definition JSON">
         Load JSON<input id="file-input" type="file" accept=".json,application/json">
@@ -37,6 +39,13 @@
   </header>
 
   <main>
+    <aside id="editor" class="hidden">
+      <div class="ed-head">
+        <h2>Editor</h2>
+        <span class="muted">changes render live</span>
+      </div>
+      <div id="editor-content"></div>
+    </aside>
     <div id="view3d" class="view"></div>
     <div id="viewmap-wrap" class="view hidden">
       <div id="viewmap"></div>

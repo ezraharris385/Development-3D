@@ -11,6 +11,17 @@
 //   "units": "ft" | "m",
 //   "anchor": { "lat": 43.07, "lon": -89.40, "bearing": 0 },   // georeference
 //   "site":   { "boundary": [[x,y], …] },                      // optional
+//   "materials": [
+//     { "id": "brick-red", "name": "Modular red brick", "category": "brick",
+//       "color": "#8f4438",                       // fallback/tint when no photo
+//       "unit": { "length": 0.667, "height": 0.19 },   // one unit's real size
+//       "texture": {                               // photo of the material
+//         "dataUrl": "data:image/…",               // uploaded photo or swatch
+//         "coverageWidth": 4, "coverageHeight": 4  // real area the photo shows
+//       },
+//       "photos": ["data:image/…"],                // extra reference photos
+//       "supplier": "…", "notes": "…" }
+//   ],
 //   "structures": [
 //     { "id": "…", "name": "…", "type": "residential",
 //       "footprint": [[x,y], …],                    // polygon, OR:
@@ -18,7 +29,13 @@
 //       "height": 66,            // to top, in file units (optional if floors)
 //       "floors": 5,             // optional; height = floors * floorHeight
 //       "floorHeight": 10.5,     // optional, default 10.5 ft / 3.2 m
-//       "color": "#8da9c4" }
+//       "color": "#8da9c4",
+//       "materials": { "facade": "brick-red", "roof": "epdm-black" },
+//       "photos": ["data:image/…"],                // site/reference photos
+//       "components": [                            // bill of materials detail
+//         { "name": "Window type W1", "material": "alum-glass",
+//           "width": 5, "height": 6, "count": 48, "notes": "…" }
+//       ] }
 //   ],
 //   "roads":      [ { "name": "…", "path": [[x,y], …], "width": 24 } ],
 //   "paths":      [ { "path": [[x,y], …], "width": 8 } ],       // sidewalks etc.
@@ -43,6 +60,11 @@ export const TYPE_COLORS = {
   hotel: '#c4a3a3',
   default: '#a9b2bc',
 };
+
+export const MATERIAL_CATEGORIES = [
+  'brick', 'stone', 'concrete', 'siding', 'glass', 'metal', 'wood',
+  'stucco', 'membrane', 'shingle', 'asphalt', 'other',
+];
 
 const DEFAULT_FLOOR_HEIGHT_M = 3.2; // ≈ 10.5 ft floor-to-floor
 
@@ -100,6 +122,7 @@ export function normalize(raw) {
     sourceUnits: units,
     anchor: null,
     site: null,
+    materials: {},
     structures: [],
     roads: [],
     paths: [],
@@ -107,6 +130,36 @@ export function normalize(raw) {
     water: [],
     parking: [],
   };
+
+  (raw.materials ?? []).forEach((m, i) => {
+    if (!m.id) {
+      warnings.push(`materials[${i}] has no "id" — skipped.`);
+      return;
+    }
+    const defCoverage = units === 'ft' ? 4 : 1.2;
+    dev.materials[m.id] = {
+      id: m.id,
+      name: m.name ?? m.id,
+      category: m.category ?? 'other',
+      color: m.color ?? '#9aa2ab',
+      unit: m.unit && (isNum(m.unit.length) || isNum(m.unit.height))
+        ? {
+            lengthM: isNum(m.unit.length) ? toMeters(m.unit.length, units) : null,
+            heightM: isNum(m.unit.height) ? toMeters(m.unit.height, units) : null,
+          }
+        : null,
+      texture: m.texture?.dataUrl
+        ? {
+            dataUrl: m.texture.dataUrl,
+            coverageWM: toMeters(isNum(m.texture.coverageWidth) ? m.texture.coverageWidth : defCoverage, units),
+            coverageHM: toMeters(isNum(m.texture.coverageHeight) ? m.texture.coverageHeight : defCoverage, units),
+          }
+        : null,
+      photos: Array.isArray(m.photos) ? m.photos : [],
+      supplier: m.supplier ?? '',
+      notes: m.notes ?? '',
+    };
+  });
 
   if (raw.anchor) {
     const { lat, lon, bearing = 0 } = raw.anchor;
@@ -141,6 +194,16 @@ export function normalize(raw) {
         height = floorHeight;
       }
     }
+    const matRef = (slot) => {
+      const id = s.materials?.[slot];
+      if (!id) return null;
+      if (!dev.materials[id]) {
+        warnings.push(`structures[${i}] references unknown material "${id}" for ${slot}.`);
+        return null;
+      }
+      return id;
+    };
+
     dev.structures.push({
       id: s.id ?? `structure-${i}`,
       name: s.name ?? s.id ?? `Structure ${i + 1}`,
@@ -149,6 +212,16 @@ export function normalize(raw) {
       heightM: toMeters(height, units),
       floors: isNum(s.floors) ? s.floors : Math.max(1, Math.round(height / floorHeight)),
       color: s.color ?? TYPE_COLORS[s.type] ?? TYPE_COLORS.default,
+      materials: { facade: matRef('facade'), roof: matRef('roof') },
+      photos: Array.isArray(s.photos) ? s.photos : [],
+      components: (s.components ?? []).map((c) => ({
+        name: c.name ?? 'Component',
+        material: c.material && dev.materials[c.material] ? c.material : null,
+        widthM: isNum(c.width) ? toMeters(c.width, units) : null,
+        heightM: isNum(c.height) ? toMeters(c.height, units) : null,
+        count: isNum(c.count) ? c.count : 1,
+        notes: c.notes ?? '',
+      })),
     });
   });
 
