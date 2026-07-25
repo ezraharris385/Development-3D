@@ -1,0 +1,99 @@
+{
+  "name": "Lakeshore Commons (Example)",
+  "units": "ft",
+  "anchor": { "lat": 43.0668, "lon": -89.4001, "bearing": 12 },
+  "site": {
+    "boundary": [
+      [-60, -60], [1060, -60], [1060, 720], [520, 820], [-60, 720]
+    ]
+  },
+  "structures": [
+    {
+      "id": "bldg-a",
+      "name": "Building A — Residences",
+      "type": "residential",
+      "footprint": [[0, 0], [220, 0], [220, 70], [140, 70], [140, 110], [0, 110]],
+      "floors": 6,
+      "floorHeight": 10.5
+    },
+    {
+      "id": "bldg-b",
+      "name": "Building B — Offices",
+      "type": "office",
+      "rect": { "center": [430, 60], "width": 260, "depth": 110, "rotation": 0 },
+      "floors": 8,
+      "floorHeight": 13
+    },
+    {
+      "id": "bldg-c",
+      "name": "Building C — Mixed Use",
+      "type": "mixed-use",
+      "rect": { "center": [780, 70], "width": 300, "depth": 130, "rotation": 0 },
+      "floors": 4,
+      "height": 58
+    },
+    {
+      "id": "hotel",
+      "name": "The Lakeshore Hotel",
+      "type": "hotel",
+      "rect": { "center": [120, 560], "width": 160, "depth": 90, "rotation": 20 },
+      "floors": 12,
+      "floorHeight": 10
+    },
+    {
+      "id": "civic",
+      "name": "Community Center",
+      "type": "civic",
+      "footprint": [[600, 480], [790, 480], [820, 560], [700, 620], [600, 580]],
+      "height": 34,
+      "floors": 2
+    },
+    {
+      "id": "garage",
+      "name": "Parking Structure",
+      "type": "parking",
+      "rect": { "center": [930, 420], "width": 190, "depth": 120, "rotation": 0 },
+      "floors": 5,
+      "floorHeight": 10
+    },
+    {
+      "id": "retail-row",
+      "name": "Retail Row",
+      "type": "retail",
+      "footprint": [[300, 300], [640, 300], [640, 360], [300, 360]],
+      "height": 22,
+      "floors": 1
+    }
+  ],
+  "roads": [
+    { "name": "Commons Boulevard", "path": [[-60, 210], [1060, 210]], "width": 36 },
+    { "name": "Market Street", "path": [[270, -60], [270, 720]], "width": 28 },
+    { "name": "Garage Loop", "path": [[270, 420], [820, 420], [930, 350]], "width": 24 }
+  ],
+  "paths": [
+    { "name": "Central Promenade", "path": [[300, 240], [640, 240], [900, 240]], "width": 14 },
+    { "name": "Park Walk", "path": [[400, 420], [430, 560], [520, 680]], "width": 10 }
+  ],
+  "greenspace": [
+    {
+      "name": "Central Park",
+      "polygon": [[320, 440], [560, 440], [560, 700], [320, 700]]
+    },
+    {
+      "name": "North Green",
+      "polygon": [[660, 150], [920, 150], [920, 195], [660, 195]]
+    }
+  ],
+  "water": [
+    {
+      "name": "Reflecting Pond",
+      "polygon": [[420, 490], [510, 490], [530, 540], [470, 590], [410, 550]]
+    }
+  ],
+  "parking": [
+    {
+      "name": "Surface Lot",
+      "polygon": [[850, 500], [1040, 500], [1040, 680], [850, 680]]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Development 3D — True-Scale Model &amp; Map Placement</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1 id="dev-name">Development 3D</h1>
+      <span class="subtitle">1 : 1 scale · real dimensions · georeferenced</span>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="view3d">3D Model</button>
+      <button class="tab-btn" data-tab="viewmap">On the Map</button>
+    </nav>
+    <div class="toolbar">
+      <button id="unit-toggle" title="Toggle display units">Units: ft</button>
+      <button id="btn-measure" title="Click two points on the ground to measure">📏 Measure</button>
+      <button id="btn-geojson" title="Download GeoJSON for GIS / other maps">⬇ GeoJSON</button>
+      <label class="file-btn" title="Load a development definition JSON">
+        Load JSON<input id="file-input" type="file" accept=".json,application/json">
+      </label>
+    </div>
+  </header>
+
+  <main>
+    <div id="view3d" class="view"></div>
+    <div id="viewmap-wrap" class="view hidden">
+      <div id="viewmap"></div>
+      <div id="map-notice" class="notice hidden">
+        This development has no <code>anchor</code> (lat/lon), so it can't be
+        placed on the map. Add one to the JSON to georeference it.
+      </div>
+    </div>
+    <aside id="info-panel" class="hidden"></aside>
+    <div id="warnings" class="hidden"></div>
+  </main>
+</body>
+<script type="module" src="src/main.js"></script>
+</html>
